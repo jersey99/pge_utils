@@ -35,10 +35,20 @@ def resample(electricity, gas, frequency):
     Resample the electricity and gas dataframes at the given frequency
     '''
     daily = pd.DataFrame()
-    daily['electric_cost'] = electricity.COST.resample(frequency).sum()
-    daily['gas_cost'] = gas.COST.resample(frequency).sum()
-    daily['elec_usage_kwh'] = electricity.USAGE.resample(frequency).sum()
-    daily['gas_usage_kwh'] = gas.USAGE.resample(frequency).sum()
+    if not electricity.empty:
+        daily['electric_cost'] = electricity.COST.resample(frequency).sum()
+        daily['elec_usage_kwh'] = electricity.USAGE.resample(frequency).sum()
+    else:
+        daily['electric_cost'] = 0
+        daily['elec_usage_kwh'] = 0
+
+    if not gas.empty:
+        daily['gas_cost'] = gas.COST.resample(frequency).sum()
+        daily['gas_usage_kwh'] = gas.USAGE.resample(frequency).sum()
+    else:
+        daily['gas_cost'] = 0
+        daily['gas_usage_kwh'] = 0
+
     daily['total_cost'] = daily.electric_cost + daily.gas_cost
     daily['total_usage'] = daily.elec_usage_kwh + daily.gas_usage_kwh
     # daily['gas_dpkwh'] = daily.gas_cost / daily.gas_usage_kwh
@@ -73,14 +83,12 @@ if __name__ == '__main__':
     parser.add_argument(
         '-e',
         '--ebill',
-        default=
-        'data/pge_electric_interval_data_2616143909_2017-11-02_to_2018-09-27.csv',
+        default=None,
         help='Electric bill usage/cost .csv file')
     parser.add_argument(
         '-g',
         '--gbill',
-        default=
-        'data/pge_gas_interval_data_2613214466_2017-11-02_to_2018-09-27.csv',
+        default=None,
         help='Gas bill usage/cost .csv file')
     parser.add_argument(
         '-f',
@@ -95,8 +103,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     E_BILL = args.ebill
     G_BILL = args.gbill
-    E = load_electric(E_BILL)
-    G = load_gas(G_BILL)
+    E = load_electric(E_BILL) if E_BILL is not None else pd.DataFrame()
+    G = load_gas(G_BILL) if G_BILL is not None else pd.DataFrame()
     FREQ = args.frequency
     dump_csv = args.dump_csv
 
